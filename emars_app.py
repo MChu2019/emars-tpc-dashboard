@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.title("🚢 EMARS TPC Shutdown Analytics Portal")
+st.title("🚢 Container Repair Analytics Portal")
 st.caption("Container Repair Cost Analysis | Source: emars_tpc_shutdown_bkup.csv")
 st.markdown("---")
 
@@ -61,8 +61,7 @@ with st.spinner("Loading EMARS TPC data from CSV..."):
         master_df = load_data(CSV_PATH)
     except FileNotFoundError:
         st.error(
-            f"CSV file not found at: `{CSV_PATH}`\n\n"
-            "Place `emars_tpc_shutdown_bkup.csv` in the same directory as this script."
+            f"Click to Load the Data" 
         )
         st.stop()
 
