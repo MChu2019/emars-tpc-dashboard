@@ -1,51 +1,60 @@
-# Container Repair Cost Analytics Dashboard
 
-**Interactive Streamlit dashboard analyzing container repair invoicing, billing, and cost variance across ports and repair types.**
+# 🚢 Container Repair Cost Analytics Dashboard
 
-[Launch Live App](https://emars-tpc-dashboard-sekiy9jb6pyfgogqozekpn.streamlit.app/)
+![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)
+![Plotly](https://img.shields.io/badge/Plotly-Visualizations-3F4F75?logo=plotly&logoColor=white)
 
-## Project Overview
+**An interactive dashboard that turns raw container repair invoicing data into a single view for spotting cost overruns across ports and repair types.**
 
-Container repair transactions (TPCs) generate invoiced and billed amounts across multiple ports, repair codes, and currencies. This dashboard consolidates that data into a single interactive view so operations teams can spot cost trends, compare ports and repair types, and catch invoice-vs-billed discrepancies without manually cross-referencing spreadsheets.
+[▶ Live App](https://emars-tpc-dashboard-sekiy9jb6pyfgogqozekpn.streamlit.app/)
 
-## Key Features
+## Problem
 
-- **Currency-normalized cost variance** — invoice and billed amounts are converted to USD at transaction-specific exchange rates, then compared to flag over- or under-invoicing
-- **Multi-dimensional filtering** — filter by year, TPC status, port code, repair code, and currency simultaneously
-- **Trend analysis** — monthly invoice vs. billed trends overall and for the top 5 repair codes by volume
-- **Port & repair breakdowns** — bar charts of invoiced amount by port and top repair codes, plus a scatter plot (bubble size = transaction count) comparing invoiced vs. billed by port with a reference y = x line
-- **Status & variance views** — TPC status distribution and cost variance grouped by port, repair code, or status
+Container repair transactions (TPCs) come in with invoiced and billed amounts across dozens of ports, repair codes, and currencies. Spotting where invoiced amounts diverge from billed amounts — or which ports/repair types are driving cost — meant manually cross-referencing spreadsheets. This dashboard consolidates that into filterable, visual views so the discrepancy is visible at a glance instead of buried in rows.
 
-## Tech Stack
+## Technical Decisions
 
-Python · Streamlit · Pandas · Plotly (Express + Graph Objects)
+- **Currency normalization at the row level, not in aggregate.** Each transaction has its own exchange rate, so I converted `INV_AMOUNT` and `BILL_AMOUNT` to USD per-row before any aggregation — aggregating first and converting after would have silently distorted totals whenever the currency mix shifted month to month.
+- **`@st.cache_data` on the load function**, not on the filtered results — the raw CSV load/parse is the expensive step; filtering is cheap and needs to re-run on every sidebar interaction, so only the load is cached.
+- **A y = x reference line on the invoice-vs-billed scatter plot**, so any port sitting above the line is immediately visible as over-invoiced relative to what was billed, without reading axis values.
 
-## How It's Built
+## One Challenge I Solved
+
+Some transactions had an `EXCH_RATE` of `0` (missing/bad data), which would have caused a division-by-zero when converting to USD. I used `.replace(0, 1)` on the exchange rate column before dividing, so those rows fall back to a 1:1 rate instead of crashing the app or silently producing `inf` values that would have skewed every downstream chart.
 
 ```python
-# Core data prep: USD normalization + variance calculation
 df["INV_AMOUNT_USD"] = df["INV_AMOUNT"] / df["EXCH_RATE"].replace(0, 1)
-df["BILL_AMOUNT_USD"] = df["BILL_AMOUNT"] / df["EXCH_RATE"].replace(0, 1)
-df["COST_VARIANCE"] = df["INV_AMOUNT_USD"] - df["BILL_AMOUNT_USD"]
 ```
 
-The app loads and caches the CSV with `@st.cache_data`, applies sidebar filters reactively, and renders three tabs (Cost Trends, Port & Repair Analysis, Status & Variance) so users can move from a high-level KPI summary down to raw filtered records.
+## Features
 
-## Run Locally
+- KPI cards: total records, total invoiced/billed (USD), waiver rate
+- Filters: year, TPC status, port code, repair code, currency
+- Trend view: monthly invoice vs. billed, plus top-5 repair codes over time
+- Port & repair breakdowns: bar charts + invoice-vs-billed scatter (bubble size = transaction count)
+- Status & variance breakdown: cost variance grouped by port, repair code, or status
+
+## Setup
 
 ```bash
+git clone https://github.com/MChu2019/emars-tpc-dashboard.git
+cd emars-tpc-dashboard
 pip install -r requirements.txt
 streamlit run emars_app.py
 ```
 
-## What I'd Improve Next
-
-- Move from CSV to a proper database backend for larger datasets
-- Add year-over-year comparison view
-- Export filtered results to CSV/Excel directly from the dashboard
-
 ## Files
 
-- `emars_app.py` — main Streamlit application
-- `emars_tpc_shutdown_bkup.csv` / `emars_tpc_shutdown_bkup_trimmed.csv` — source data
-- `requirements.txt` — dependencies
+| File | Purpose |
+|---|---|
+| `emars_app.py` | Main Streamlit application |
+| `emars_tpc_shutdown_bkup.csv` | Source data |
+| `emars_tpc_shutdown_bkup_trimmed.csv` | Trimmed dataset for faster local testing |
+| `requirements.txt` | Dependencies |
+
+## What I'd Improve Next
+
+- Move from CSV to a database backend for larger datasets
+- Add year-over-year comparison view
+- Export filtered results directly from the dashboard
