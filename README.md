@@ -1,8 +1,5 @@
 # 🚢 Container Repair Cost Analytics Dashboard
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
-![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)
-![Plotly](https://img.shields.io/badge/Plotly-Visualizations-3F4F75?logo=plotly&logoColor=white)
 
 **An interactive dashboard that turns raw container repair invoicing data into a single view for spotting cost overruns across ports and repair types.**
 
